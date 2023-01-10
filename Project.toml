@@ -1,0 +1,15 @@
+name = "BnbPeeling"
+uuid = "cc10660e-c3f2-4e14-a7df-fa517a174f79"
+authors = ["Theo Guyard <theo.guyard@insa-rennes.fr>"]
+version = "0.1.0"
+
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
