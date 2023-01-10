@@ -132,13 +132,6 @@ function bound!(
         )
         gap = abs(pv - dv)
 
-        @assert all(Mneg <= x <= Mpos)
-        if isnan(gap)
-            println(pv)
-            println(dv)
-            error()
-        end
-
         # ----- Stopping criterion ----- #
 
         if gap < tolgap
