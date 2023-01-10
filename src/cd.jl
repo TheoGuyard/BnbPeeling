@@ -8,7 +8,7 @@ function bound!(
     prob::Problem, 
     bnb::BnB, 
     node::Node,  
-    options::Options,   
+    options::BnbParams,   
     bounding_type::BoundingType,
     )
     

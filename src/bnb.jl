@@ -1,4 +1,4 @@
-Base.@kwdef struct Options
+Base.@kwdef struct BnbParams
     lb_solver::AbstractSolver           = CoordinateDescent(tolgap=1e-4, maxiter=10_000)
     ub_solver::AbstractSolver           = CoordinateDescent(tolgap=1e-8, maxiter=10_000)
     maxtime::Float64                    = 60.
@@ -98,7 +98,7 @@ mutable struct BnB
     end
 end
 
-struct Result 
+struct BnbResults 
     termination_status::MOI.TerminationStatusCode
     solve_time::Float64
     node_count::Int
@@ -106,7 +106,7 @@ struct Result
     relative_gap::Float64
     x::Vector{Float64}
     trace::Trace
-    function Result(bnb::BnB, trace::Trace)
+    function BnbResults(bnb::BnB, trace::Trace)
         return new(
             bnb.status,
             elapsed_time(bnb),
@@ -157,7 +157,7 @@ elapsed_time(bnb::BnB) = Dates.time() - bnb.start_time
 gap(bnb::BnB) = abs(bnb.ub - bnb.lb) / (bnb.ub)
 is_terminated(bnb::BnB) = (bnb.status != MOI.OPTIMIZE_NOT_CALLED)
 
-function update_status!(bnb::BnB, options::Options)
+function update_status!(bnb::BnB, options::BnbParams)
     if elapsed_time(bnb) >= options.maxtime
         bnb.status = MOI.TIME_LIMIT
     elseif bnb.node_count >= options.maxnode
@@ -170,20 +170,20 @@ function update_status!(bnb::BnB, options::Options)
     return (bnb.status != MOI.OPTIMIZE_NOT_CALLED)
 end
 
-function next_node!(bnb::BnB, options::Options)
+function next_node!(bnb::BnB, options::BnbParams)
     node = pop!(bnb.queue)
     bnb.node_count += 1
     return node
 end
 
-function prune!(prob::Problem, bnb::BnB, node::Node, options::Options)
+function prune!(prob::Problem, bnb::BnB, node::Node, options::BnbParams)
     pruning_test = (node.lb > bnb.ub)
     perfect_test = (abs(node.ub - node.lb) <= options.tolgap) 
     prune = (pruning_test | perfect_test)
     return prune
 end
 
-function branch!(prob::Problem, bnb::BnB, node::Node, options::Options)
+function branch!(prob::Problem, bnb::BnB, node::Node, options::BnbParams)
     !any(node.Sb) && return nothing
     jSb = argmax(abs.(node.x[node.Sb])) 
     j = (1:prob.n)[node.Sb][jSb]
@@ -212,7 +212,7 @@ function fixto!(node::Node, j::Int, jval::Int, prob::Problem)
     return nothing
 end
 
-function update_bounds!(bnb::BnB, node::Node, options::Options)
+function update_bounds!(bnb::BnB, node::Node, options::BnbParams)
     if (node.ub ≈ bnb.ub) & (norm(node.x_ub, 0) < norm(bnb.x, 0))
         bnb.ub = copy(node.ub)
         bnb.x = copy(node.x_ub)
@@ -229,7 +229,7 @@ function update_bounds!(bnb::BnB, node::Node, options::Options)
     end
 end
 
-function update_trace!(problem::Problem, trace::Trace, bnb::BnB, node::Node, options::Options)
+function update_trace!(problem::Problem, trace::Trace, bnb::BnB, node::Node, options::BnbParams)
     push!(trace.ub, bnb.ub)
     push!(trace.lb, bnb.lb)
     push!(trace.node_count, bnb.node_count)
@@ -241,7 +241,7 @@ function update_trace!(problem::Problem, trace::Trace, bnb::BnB, node::Node, opt
     return nothing
 end
 
-function Base.show(io::IO, result::Result)
+function Base.show(io::IO, result::BnbResults)
     println(io, "BnB result")
     println(io, "  Status     : $(result.termination_status)")
     println(io, "  Objective  : $(round(result.objective_value, digits=5))")
@@ -253,7 +253,7 @@ function Base.show(io::IO, result::Result)
     return nothing
 end
 
-function solve(
+function solve_bnb(
     A::Matrix{Float64},
     y::Vector{Float64},
     λ::Float64,
@@ -267,7 +267,7 @@ function solve(
     @assert length(x0) == prob.n
     bnb     = BnB(prob, x0)
     trace   = Trace()
-    options = Options(; kwargs...)
+    options = BnbParams(; kwargs...)
 
     options.verbosity && display_head()
     while true
@@ -285,5 +285,5 @@ function solve(
     end
     options.verbosity && display_tail()
 
-    return Result(bnb, trace)
+    return BnbResults(bnb, trace)
 end

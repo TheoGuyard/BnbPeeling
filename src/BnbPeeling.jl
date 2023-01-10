@@ -1,4 +1,4 @@
-# module BnbPeeling
+module BnbPeeling
 
 using Dates
 using Distributions
@@ -26,4 +26,7 @@ include("bnb.jl")
 include("cd.jl")
 include("accelerations.jl")
 
-# end
+export synthetic_data
+export solve_bnb, BnbParams, BnbResults
+
+end
