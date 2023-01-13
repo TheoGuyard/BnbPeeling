@@ -137,10 +137,10 @@ function bound!(
         if gap < tolgap
             break
         elseif it > maxiter
-            @warn "maxiter reached, last gap : $(gap)"
+            # @warn "maxiter reached, last gap : $(gap)"
             break
         elseif elapsed_time(bnb) >= maxtime
-            @warn "maxtime reached, last gap : $(gap)"
+            # @warn "maxtime reached, last gap : $(gap)"
             break
         end
 
