@@ -629,8 +629,7 @@ to attach them to the start of each source file to most effectively
 state the exclusion of warranty; and each file should have at least
 the "copyright" line and a pointer to where the full notice is found.
 
-    BnB-peeling : A Branch-and-Bound solver for L0-penalized problems with 
-    Big-M constraint implementing the Peeling methodology.
+    BnB-screening : Safe peeling for L0-regularized least-squares
     Copyright (C) 2023  Theo Guyard
 
     This program is free software: you can redistribute it and/or modify

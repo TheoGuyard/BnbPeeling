@@ -31,9 +31,9 @@ function bound!(
         x = node.x
         w = node.w
         u = node.u
-        v = Vector{Float64}(undef, n)
-        r = Vector{Float64}(undef, n)
-        q = Vector{Float64}(undef, n)
+        v = Vector(undef, n)
+        r = Vector(undef, n)
+        q = Vector(undef, n)
     elseif bounding_type == UPPER
         S0 = copy(node.S0 .| node.Sb)
         S1 = copy(node.S1)
@@ -44,9 +44,9 @@ function bound!(
         x[S1] = copy(node.x[S1])
         w = A[:, S1] * x[S1]
         u = y - w
-        v = Vector{Float64}(undef, n)
-        r = Vector{Float64}(undef, n)
-        q = Vector{Float64}(undef, n)
+        v = Vector(undef, n)
+        r = Vector(undef, n)
+        q = Vector(undef, n)
     else
         error("Unknown bounding type $bounding_type")
     end

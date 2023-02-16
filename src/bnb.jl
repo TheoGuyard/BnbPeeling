@@ -20,14 +20,14 @@ mutable struct Node
     S0::BitArray
     S1::BitArray
     Sb::BitArray
-    Mpos::Vector{Float64}
-    Mneg::Vector{Float64}
+    Mpos::Vector
+    Mneg::Vector
     lb::Float64
     ub::Float64
-    x::Vector{Float64}
-    w::Vector{Float64}
-    u::Vector{Float64}
-    x_ub::Vector{Float64}
+    x::Vector
+    w::Vector
+    u::Vector
+    x_ub::Vector
     function Node(prob::Problem)
         return new(
             nothing,
@@ -67,25 +67,25 @@ mutable struct Node
 end
 
 Base.@kwdef mutable struct Trace 
-    ub::Vector{Float64}             = Vector{Float64}()
-    lb::Vector{Float64}             = Vector{Float64}()
+    ub::Vector             = Vector()
+    lb::Vector             = Vector()
     node_count::Vector{Int}         = Vector{Int}()
-    timer::Vector{Float64}          = Vector{Float64}()
+    timer::Vector          = Vector()
     card_Sb::Vector{Int}            = Vector{Int}()
     card_S1::Vector{Int}            = Vector{Int}()
     card_S0::Vector{Int}            = Vector{Int}()
-    spread::Vector{Float64}         = Vector{Float64}()
+    spread::Vector         = Vector()
 end
 
 mutable struct BnB 
     status::MOI.TerminationStatusCode
     ub::Float64
     lb::Float64
-    x::Vector{Float64}
+    x::Vector
     queue::Vector{Node}
     node_count::Int
     start_time::Float64
-    function BnB(prob::Problem, x0::Vector{Float64})
+    function BnB(prob::Problem, x0::Vector)
         return new(
             MOI.OPTIMIZE_NOT_CALLED,
             objective(prob, x0),
@@ -104,7 +104,7 @@ struct BnbResults
     node_count::Int
     objective_value::Float64
     relative_gap::Float64
-    x::Vector{Float64}
+    x::Vector
     trace::Trace
     function BnbResults(bnb::BnB, trace::Trace)
         return new(
@@ -253,12 +253,12 @@ function Base.show(io::IO, result::BnbResults)
     return nothing
 end
 
-function solve_bnb(
-    A::Matrix{Float64},
-    y::Vector{Float64},
+function solve_sbnbp(
+    A::Matrix,
+    y::Vector,
     λ::Float64,
     Mval::Float64;
-    x0::Union{Vector{Float64},Nothing}=nothing,
+    x0::Union{Vector,Nothing}=nothing,
     kwargs...
     )
 

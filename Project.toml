@@ -4,12 +4,18 @@ authors = ["Theo Guyard <theo.guyard@insa-rennes.fr>"]
 version = "0.1.0"
 
 [deps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+BnbScreening = "a06ce070-76da-40ae-b0d4-d41e0cb32b95"
+CPLEX = "a076750e-1247-5638-91d2-ce28b192dca0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+RCall = "6f49c342-dc21-5d91-9882-a32aef131414"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

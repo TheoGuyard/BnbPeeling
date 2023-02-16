@@ -21,11 +21,11 @@ abstract type AbstractSolver end
 end
 
 include("problem.jl")
-include("data.jl")
 include("bnb.jl")
 include("cd.jl")
 include("accelerations.jl")
 
+export Problem, objective
 export synthetic_data
 export solve_bnb, BnbParams, BnbResults
 

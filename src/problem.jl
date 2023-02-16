@@ -20,14 +20,15 @@ struct Problem
     end
 end
 
-function objective(prob::Problem, x::Vector{Float64}, w::Vector{Float64})
+function objective(prob::Problem, x::Vector, w::Vector)
     all(-prob.Mval .<= x .<= prob.Mval) || return Inf
     u = prob.y - w
     f = 0.5 * (u' * u)
     g = norm(x, 0.)
     return f + prob.λ * g
 end
-function objective(prob::Problem, x::Vector{Float64})
+
+function objective(prob::Problem, x::Vector)
     all(-prob.Mval .<= x .<= prob.Mval) || return Inf
     w = prob.A * x
     return objective(prob, x, w)
