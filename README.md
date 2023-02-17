@@ -56,7 +56,7 @@ You can refer to the paper linked to this package for more details.
 * `γ::Float64` : big-m calibration factor, must be larger than `1`
 * `solver::String` : solver to run, choices are `cplex`, `l0bnb`, `sbnb`, `sbnbn`, `sbnbp`
 * `maxtime::Float64` : maximum time allowed in second, must be positive
-* `--seed::Int` : seed to use, optional, must be strictly positive
+* `seed::Int` : random seed to use, optional, must be strictly positive
 
 **Example:**
 ```bash

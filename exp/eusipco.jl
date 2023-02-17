@@ -76,7 +76,6 @@ function onerun(setup::Dict)
     #         x0          = x0, 
     #         dualpruning = true,
     #         l0screening = true, 
-    #         l1screening = true, 
     #         bigmpeeling = true,
     #         verbosity   = false,
     #         trace       = false,
@@ -90,32 +89,15 @@ function onerun(setup::Dict)
     # end
     # M *= setup["γ"]
 
-    println("Precompilation...")
-    if setup["solver"] == "cplex"
-        result_precomp = solve_cplex(A, y, λ, M, maxtime=10.)
-    elseif setup["solver"] == "l0bnb"
-        result_precomp = solve_l0bnb(A, y, λ, M, maxtime=10.)
-    elseif setup["solver"] == "sbnb"
-        result_precomp = solve_sbnb(A, y, λ, M, maxtime=10.)
-    elseif setup["solver"] == "sbnbn"
-        result_precomp = solve_sbnbn(A, y, λ, M, maxtime=10.)
-    elseif setup["solver"] == "sbnbp"
-        result_precomp = solve_sbnbp(A, y, λ, M, maxtime=10.)
-    end
+    println("Precompiling...")
+    result = solve(setup["solver"], A, y, λ, M, maxtime=5.)
 
     println("Running $(setup["solver"])...")
-    if setup["solver"] == "cplex"
-        result = solve_cplex(A, y, λ, M, maxtime=setup["maxtime"])
-    elseif setup["solver"] == "l0bnb"
-        result = solve_l0bnb(A, y, λ, M, maxtime=setup["maxtime"])
-    elseif setup["solver"] == "sbnb"
-        result = solve_sbnb(A, y, λ, M, maxtime=setup["maxtime"])
-    elseif setup["solver"] == "sbnbn"
-        result = solve_sbnbn(A, y, λ, M, maxtime=setup["maxtime"])
-    elseif setup["solver"] == "sbnbp"
-        result = solve_sbnbp(A, y, λ, M, maxtime=setup["maxtime"])
-    end
+    result = solve(setup["solver"], A, y, λ, M, maxtime=setup["maxtime"])
 
+    println()
+    println(Problem(A, y, λ, M))
+    println()
     println("Result")
     println("  Status     : $(result[:termination_status])")
     println("  Objective  : $(round(result[:objective_value], digits=5))")
@@ -123,6 +105,7 @@ function onerun(setup::Dict)
     println("  Node count : $(result[:node_count])")
     println("  Non-zeros  : $(norm(result[:x], 0))")
     println("  Inf-norm x : $(norm(result[:x], Inf))")
+    println()
 
     return nothing
 end

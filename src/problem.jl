@@ -1,3 +1,8 @@
+"""
+    Problem
+
+L0-penalized least-squares problem with Big-M constraint.
+"""
 struct Problem
     A::Matrix
     y::Vector
@@ -20,16 +25,35 @@ struct Problem
     end
 end
 
-function objective(prob::Problem, x::Vector, w::Vector)
+"""
+    objective(prob::Problem, x::Vector, Ax::Vector)
+
+Evalutes the objective of a [`Problem`](@ref) at `x` when the value of `Ax` is 
+already known.
+"""
+function objective(prob::Problem, x::Vector, Ax::Vector)
     all(-prob.Mval .<= x .<= prob.Mval) || return Inf
-    u = prob.y - w
+    u = prob.y - Ax
     f = 0.5 * (u' * u)
     g = norm(x, 0.)
     return f + prob.λ * g
 end
 
+"""
+    objective(prob::Problem, x::Vector)
+
+Evalutes the objective of a [`Problem`](@ref) at `x`.
+"""
 function objective(prob::Problem, x::Vector)
     all(-prob.Mval .<= x .<= prob.Mval) || return Inf
     w = prob.A * x
     return objective(prob, x, w)
+end
+
+function Base.show(io::IO, problem::Problem)
+    println(io, "L0-penalized problem")
+    println(io, "  Dims    : $(problem.m) x $(problem.n)")
+    println(io, "  Mval    : $(problem.Mval)")
+    println(io, "  λ       : $(round(problem.λ, digits=4))")
+    print(io, "  λ/λmax  : $(round(problem.λ / (problem.Mval * norm(problem.A' * problem.y, Inf)), digits=4))")
 end

@@ -14,19 +14,13 @@ authors() = "Theo Guyard"
 contact() = "theo.guyard@insa-rennes.fr"
 license() = "AGPL 3.0"
 
-abstract type AbstractSolver end
-@enum BoundingType begin
-    LOWER
-    UPPER
-end
-
 include("problem.jl")
-include("bnb.jl")
-include("cd.jl")
+include("solver.jl")
+include("bounding.jl")
 include("accelerations.jl")
 
 export Problem, objective
-export synthetic_data
-export solve_bnb, BnbParams, BnbResults
+export AbstractBoundingSolver, BoundingType
+export BnbParams, BnbResults, solve_bnb
 
 end

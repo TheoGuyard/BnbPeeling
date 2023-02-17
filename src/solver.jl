@@ -1,6 +1,40 @@
+"""
+    AbstractBoundingSolver
+
+Abstract supertype for solvers used in the bounding steps of the BnB algorithm.
+"""
+abstract type AbstractBoundingSolver end
+
+"""
+    BoundingType
+
+Type of the bounding operation.
+"""
+@enum BoundingType LOWER UPPER 
+
+"""
+    BnbParams
+
+Parameters of the Branch-and-Bound algorithm.
+
+# Attributes 
+- `lb_solver::AbstractBoundingSolver` : Solver for the lower-bounding step.
+- `ub_solver::AbstractBoundingSolver` : Solver for the upper-bounding step.
+- `maxtime::Float64` : Maximum solution time in seconds.
+- `maxnode::Int` : Maximum number of nodes.
+- `tolgap::Float64` : Relative MIP gap tolerance.
+- `tolint::Float64` : Integer tolerance, i.e., `x = 0` when `|x| < tolint`.
+- `dualpruning::Bool` : Toogle the dual-pruning acceleration.
+- `l0screening::Bool` : Toogle the L0-screening acceleration.
+- `l1screening::Bool` : Toogle the L1-screening acceleration.
+- `bigmpeeling::Bool` : Toogle the peeling acceleration.
+- `verbosity::Bool` : Toogle verbosity.
+- `showevery::Int` : Displays logs every `showevery` nodes explored.
+- `trace::Bool` : Whether to fill the [`BnbTrace`](@ref) or not.
+"""
 Base.@kwdef struct BnbParams
-    lb_solver::AbstractSolver           = CoordinateDescent(tolgap=1e-4, maxiter=10_000)
-    ub_solver::AbstractSolver           = CoordinateDescent(tolgap=1e-8, maxiter=10_000)
+    lb_solver::AbstractBoundingSolver   = CoordinateDescent(tolgap=1e-4, maxiter=10_000)
+    ub_solver::AbstractBoundingSolver   = CoordinateDescent(tolgap=1e-8, maxiter=10_000)
     maxtime::Float64                    = 60.
     maxnode::Int                        = typemax(Int)
     tolgap::Float64                     = 0.
@@ -66,17 +100,27 @@ mutable struct Node
     end
 end
 
+"""
+    BnbTrace
+
+Trace of the Branch-and-Bound solver.
+"""
 Base.@kwdef mutable struct Trace 
-    ub::Vector             = Vector()
-    lb::Vector             = Vector()
-    node_count::Vector{Int}         = Vector{Int}()
-    timer::Vector          = Vector()
-    card_Sb::Vector{Int}            = Vector{Int}()
-    card_S1::Vector{Int}            = Vector{Int}()
-    card_S0::Vector{Int}            = Vector{Int}()
-    spread::Vector         = Vector()
+    ub::Vector              = Vector()
+    lb::Vector              = Vector()
+    node_count::Vector{Int} = Vector{Int}()
+    timer::Vector           = Vector()
+    card_Sb::Vector{Int}    = Vector{Int}()
+    card_S1::Vector{Int}    = Vector{Int}()
+    card_S0::Vector{Int}    = Vector{Int}()
+    spread::Vector          = Vector()
 end
 
+"""
+    BnB
+
+Branch-and-Bound solver for a [`Problem`](@ref)
+"""
 mutable struct BnB 
     status::MOI.TerminationStatusCode
     ub::Float64
@@ -98,6 +142,11 @@ mutable struct BnB
     end
 end
 
+"""
+    BnbResults
+
+Results of the Branch-and-Bound solver.
+"""
 struct BnbResults 
     termination_status::MOI.TerminationStatusCode
     solve_time::Float64
@@ -134,7 +183,7 @@ function display_head()
     return nothing
 end
 
-function display_trace(prob, bnb, node)
+function display_trace(bnb, node)
     @printf " %5.2f" elapsed_time(bnb)
     @printf " %7d" bnb.node_count
     @printf " %7.2f" bnb.lb
@@ -143,7 +192,6 @@ function display_trace(prob, bnb, node)
     @printf "  %3d%%" 100 * sum(node.S0) / length(node.S0)
     @printf "  %3d%%" 100 * sum(node.S1) / length(node.S1)
     @printf "  %3d%%" 100 * sum(node.Sb) / length(node.Sb)
-    @printf "  %3d%%" 100 * trace.spread
     println()
 end
 
@@ -155,6 +203,7 @@ depth(node::Node) = sum(node.S0 .| node.S1)
 elapsed_time(t0::Float64) = Dates.time() - t0
 elapsed_time(bnb::BnB) = Dates.time() - bnb.start_time
 gap(bnb::BnB) = abs(bnb.ub - bnb.lb) / (bnb.ub)
+gap(node::Node) = abs(node.ub - node.lb) / (node.ub)
 is_terminated(bnb::BnB) = (bnb.status != MOI.OPTIMIZE_NOT_CALLED)
 
 function update_status!(bnb::BnB, options::BnbParams)
@@ -167,23 +216,23 @@ function update_status!(bnb::BnB, options::BnbParams)
     elseif isempty(bnb.queue)
         bnb.status = MOI.OPTIMAL
     end
-    return (bnb.status != MOI.OPTIMIZE_NOT_CALLED)
+    return is_terminated(bnb)
 end
 
-function next_node!(bnb::BnB, options::BnbParams)
+function next_node!(bnb::BnB)
     node = pop!(bnb.queue)
     bnb.node_count += 1
     return node
 end
 
-function prune!(prob::Problem, bnb::BnB, node::Node, options::BnbParams)
+function prune!(bnb::BnB, node::Node, options::BnbParams)
     pruning_test = (node.lb > bnb.ub)
-    perfect_test = (abs(node.ub - node.lb) <= options.tolgap) 
+    perfect_test = (gap(node) <= options.tolgap) 
     prune = (pruning_test | perfect_test)
     return prune
 end
 
-function branch!(prob::Problem, bnb::BnB, node::Node, options::BnbParams)
+function branch!(prob::Problem, bnb::BnB, node::Node)
     !any(node.Sb) && return nothing
     jSb = argmax(abs.(node.x[node.Sb])) 
     j = (1:prob.n)[node.Sb][jSb]
@@ -193,6 +242,15 @@ function branch!(prob::Problem, bnb::BnB, node::Node, options::BnbParams)
     push!(bnb.queue, node_j1)
     return nothing
 end
+
+bound!(
+    solver::AbstractBoundingSolver, 
+    prob::Problem, 
+    bnb::BnB, 
+    node::Node,  
+    options::BnbParams,   
+    bounding_type::BoundingType,
+) = error("Not implemented")
 
 function fixto!(node::Node, j::Int, jval::Int, prob::Problem)
     node.Sb[j] || error("Branching index $j is already fixed")
@@ -212,7 +270,7 @@ function fixto!(node::Node, j::Int, jval::Int, prob::Problem)
     return nothing
 end
 
-function update_bounds!(bnb::BnB, node::Node, options::BnbParams)
+function update_bounds!(bnb::BnB, node::Node)
     if (node.ub ≈ bnb.ub) & (norm(node.x_ub, 0) < norm(bnb.x, 0))
         bnb.ub = copy(node.ub)
         bnb.x = copy(node.x_ub)
@@ -229,7 +287,7 @@ function update_bounds!(bnb::BnB, node::Node, options::BnbParams)
     end
 end
 
-function update_trace!(problem::Problem, trace::Trace, bnb::BnB, node::Node, options::BnbParams)
+function update_trace!(problem::Problem, trace::Trace, bnb::BnB, node::Node)
     push!(trace.ub, bnb.ub)
     push!(trace.lb, bnb.lb)
     push!(trace.node_count, bnb.node_count)
@@ -253,7 +311,21 @@ function Base.show(io::IO, result::BnbResults)
     return nothing
 end
 
-function solve_sbnbp(
+"""
+    solve_bnb(
+        A::Matrix,
+        y::Vector,
+        λ::Float64,
+        Mval::Float64;
+        x0::Union{Vector,Nothing}=nothing,
+        kwargs...
+    )
+
+Solve a [`Problem`](@ref) with a Branch-and-Bound solver. The argument `x0` is 
+used as a warm start. All the keyword arguments are passed to a 
+[`BnbParams`](@ref) instance.
+"""
+function solve_bnb(
     A::Matrix,
     y::Vector,
     λ::Float64,
@@ -273,15 +345,15 @@ function solve_sbnbp(
     while true
         update_status!(bnb, options) 
         is_terminated(bnb) && break
-        node = next_node!(bnb, options)
+        node = next_node!(bnb)
         bound!(options.lb_solver, prob, bnb, node, options, LOWER)
-        if !(prune!(prob, bnb, node, options))
+        if !prune!(bnb, node, options)
             bound!(options.ub_solver, prob, bnb, node, options, UPPER)
-            branch!(prob, bnb, node, options)
+            branch!(prob, bnb, node)
         end
-        update_bounds!(bnb, node, options)
-        options.trace && update_trace!(prob, trace, bnb, node, options)
-        options.verbosity && bnb.node_count % options.showevery == 0 && display_trace(prob, bnb, node)
+        update_bounds!(bnb, node)
+        options.trace && update_trace!(prob, trace, bnb, node)
+        options.verbosity && (bnb.node_count % options.showevery == 0) && display_trace(bnb, node)
     end
     options.verbosity && display_tail()
 

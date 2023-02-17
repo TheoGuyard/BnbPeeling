@@ -1,4 +1,9 @@
-Base.@kwdef struct CoordinateDescent <: AbstractSolver
+"""
+    CoordinateDescent <: AbstractBoundingSolver
+
+Coordinate-descent solver for the bounding problems.
+"""
+Base.@kwdef struct CoordinateDescent <: AbstractBoundingSolver
     tolgap::Float64 = 1e-8
     maxiter::Int    = 10_000
 end
@@ -80,7 +85,7 @@ function bound!(
 
         it += 1
 
-        # ----- Descent loop ----- #
+        # ----- Coordinate descent loop ----- #
 
         idx = (Sbi .| Sbb .| S1i .| S1b)
         for i in shuffle(findall(idx))
@@ -106,30 +111,38 @@ function bound!(
 
         # ----- Gap computation ----- #
 
+        Sbpos  = (Sbi .| Sbb) .& (0. .< x .<= Mpos) 
+        Sbneg  = (Sbi .| Sbb) .& (0. .> x .>= Mneg)
         v[idx] = A[:, idx]' * u
         q[idx] = (
             Mpos[idx] .* max.(v[idx] ./ λ, 0.) +  
             Mneg[idx] .* min.(v[idx] ./ λ, 0.) .- 
             1.
         )
+        
+        # Primal value
+        fval = 0.5 * (u' * u)
+        gval = 0.
+        for i in findall(idx)
+            if Sbpos[i]
+                gval += max(x[i], 0.) / Mpos[i]
+            elseif Sbneg[i]
+                gval += min(x[i], 0.) / Mneg[i]
+            elseif S1[i]
+                gval += 1.
+            end
+        end
+        pv = fval + λ * gval
 
-        Sbipos = Sbi .& (0. .< x .<= Mpos)
-        Sbineg = Sbi .& (0. .> x .>= Mneg)
-        Sbbpos = Sbb .& (0. .< x .<= Mpos)
-        Sbbneg = Sbb .& (0. .> x .>= Mneg)
+        # Dual value
+        cfval = 0.5 * (u' * u) - u' * y
+        cgval = 0.
+        for i in findall(idx)
+            cgval += Sb[i] ? max(q[i], 0.) : q[i]
+        end
+        dv = -cfval - λ * cgval
 
-        pv = 0.5 * (u' * u) + λ * (
-            sum(max.(x[Sbipos], 0.) ./ Mpos[Sbipos]) + 
-            sum(min.(x[Sbineg], 0.) ./ Mneg[Sbineg]) + 
-            sum(max.(x[Sbbpos], 0.) ./ Mpos[Sbbpos]) + 
-            sum(min.(x[Sbbneg], 0.) ./ Mneg[Sbbneg]) + 
-            sum(S1)
-        )
-        dv = -0.5 * (u' * u) + u' * y - λ * (
-            sum(max.(q[Sbi], 0.)) + 
-            sum(max.(q[Sbb], 0.)) + 
-            sum(q[S1])
-        )
+        # Gap
         gap = abs(pv - dv)
 
         # ----- Stopping criterion ----- #

@@ -1,3 +1,12 @@
+"""
+    l0screening!
+
+Node-screening tests to fix variables at nodes of the BnB tree.
+Reference: Guyard, T., Herzet, C., & Elvira, C. (2022, May). Node-screening 
+tests for the l0-penalized least-squares problem. In ICASSP 2022-2022 IEEE 
+International Conference on Acoustics, Speech and Signal Processing (ICASSP) 
+(pp. 5448-5452). IEEE.
+"""
 function l0screening!(
     A::Matrix,
     y::Vector,
@@ -43,6 +52,13 @@ function l0screening!(
     return nothing
 end
 
+"""
+    l1screening!
+
+Screening tests to accelerate the bounding resolution. Reference: Samain, G., 
+Bourguignon, S., & Ninin, J. (2022). Techniques for accelerating 
+Branch-and-Bound algorithms dedicated to sparse optimization.
+"""
 function l1screening!(
     A::Matrix,
     y::Vector,
@@ -81,6 +97,12 @@ function l1screening!(
     return nothing
 end
 
+"""
+    bigmpeeling!
+
+Peeling strategy to tighten the relaxations solved at each nodes of the BnB
+tree. Reference: TO BE ANNONCED.
+"""
 function bigmpeeling!(
     A::Matrix,
     y::Vector,
@@ -109,7 +131,6 @@ function bigmpeeling!(
             # Peel Mpos
             αpos = max(Mneg[i] + α, 0.)
             if αpos < Mpos[i]
-                # (αpos == 0.) && println("pos $i : $(Mpos[i]) -> $αpos")
                 if x[i] > αpos
                     axpy!(αpos - x[i], A[:, i], w)
                     x[i] = αpos
@@ -121,7 +142,6 @@ function bigmpeeling!(
             # Peel Mneg
             αneg = min(Mpos[i] + α, 0.)
             if αneg > Mneg[i]
-                # (αneg == 0.) && println("neg $i : $(Mneg[i]) -> $αneg")
                 if x[i] < αneg
                     axpy!(αneg - x[i], A[:, i], w)
                     x[i] = αneg
