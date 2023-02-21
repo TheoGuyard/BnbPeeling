@@ -1,6 +1,5 @@
 using ArgParse
 using BnbPeeling
-using BnbScreening
 using CPLEX
 using Distributions
 using JuMP
@@ -129,13 +128,16 @@ function solve_sbnb(
     verbosity::Bool=false,
     )
 
-    params = BnbScreening.BnbParams(
+    result = BnbPeeling.solve_bnb(A, y, λ, M, 
         maxtime     = maxtime,
         verbosity   = verbosity,
-        screening   = false,
-        tol         = 1e-8,
+        l0screening = false,
+        l1screening = false,
+        dualpruning = true,
+        bigmpeeling = false,
+        tolint      = 1e-8,
+        tolgap      = 1e-8,
     )
-    result = BnbScreening.solve_bnb(A, y, λ, M, bnbparams=params)
     result = Dict(
         :termination_status => result.termination_status,
         :solve_time         => result.solve_time,
@@ -156,13 +158,16 @@ function solve_sbnbn(
     verbosity::Bool=false,
     )
 
-    params = BnbScreening.BnbParams(
+    result = BnbPeeling.solve_bnb(A, y, λ, M, 
         maxtime     = maxtime,
         verbosity   = verbosity,
-        screening   = true,
-        tol         = 1e-8,
+        l0screening = true,
+        l1screening = false,
+        dualpruning = true,
+        bigmpeeling = false,
+        tolint      = 1e-8,
+        tolgap      = 1e-8,
     )
-    result = BnbScreening.solve_bnb(A, y, λ, M, bnbparams=params)
     result = Dict(
         :termination_status => result.termination_status,
         :solve_time         => result.solve_time,
