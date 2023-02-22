@@ -10,17 +10,12 @@ struct Problem
     Mval::Float64
     m::Int
     n::Int
-    function Problem(
-        A::Matrix,
-        y::Vector,
-        λ::Float64,
-        Mval::Float64,
-    )   
+    function Problem(A::Matrix, y::Vector, λ::Float64, Mval::Float64)
         m, n = size(A)
         @assert length(y) == m
-        @assert λ > 0.
-        @assert Mval > 0.
-        @assert all(norm(ai) ≈ 1. for ai in eachcol(A))
+        @assert λ > 0.0
+        @assert Mval > 0.0
+        @assert all(norm(ai) ≈ 1.0 for ai in eachcol(A))
         return new(A, y, λ, Mval, m, n)
     end
 end
@@ -35,7 +30,7 @@ function objective(prob::Problem, x::Vector, Ax::Vector)
     all(-prob.Mval .<= x .<= prob.Mval) || return Inf
     u = prob.y - Ax
     f = 0.5 * (u' * u)
-    g = norm(x, 0.)
+    g = norm(x, 0.0)
     return f + prob.λ * g
 end
 
@@ -55,5 +50,8 @@ function Base.show(io::IO, problem::Problem)
     println(io, "  Dims    : $(problem.m) x $(problem.n)")
     println(io, "  Mval    : $(problem.Mval)")
     println(io, "  λ       : $(round(problem.λ, digits=4))")
-    print(io, "  λ/λmax  : $(round(problem.λ / (problem.Mval * norm(problem.A' * problem.y, Inf)), digits=4))")
+    print(
+        io,
+        "  λ/λmax  : $(round(problem.λ / (problem.Mval * norm(problem.A' * problem.y, Inf)), digits=4))",
+    )
 end

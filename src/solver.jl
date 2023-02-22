@@ -10,7 +10,7 @@ abstract type AbstractBoundingSolver end
 
 Type of the bounding operation.
 """
-@enum BoundingType LOWER UPPER 
+@enum BoundingType LOWER UPPER
 
 """
     BnbParams
@@ -33,22 +33,22 @@ Parameters of the Branch-and-Bound algorithm.
 - `trace::Bool` : Whether to fill the [`BnbTrace`](@ref) or not.
 """
 Base.@kwdef struct BnbParams
-    lb_solver::AbstractBoundingSolver   = CoordinateDescent(tolgap=1e-4, maxiter=10_000)
-    ub_solver::AbstractBoundingSolver   = CoordinateDescent(tolgap=1e-8, maxiter=10_000)
-    maxtime::Float64                    = 60.
-    maxnode::Int                        = typemax(Int)
-    tolgap::Float64                     = 0.
-    tolint::Float64                     = 0.
-    dualpruning::Bool                   = false
-    l0screening::Bool                   = false
-    l1screening::Bool                   = false
-    bigmpeeling::Bool                   = false
-    verbosity::Bool                     = false
-    showevery::Int                      = 1
-    trace::Bool                         = true
+    lb_solver::AbstractBoundingSolver = CoordinateDescent(tolgap = 1e-4, maxiter = 10_000)
+    ub_solver::AbstractBoundingSolver = CoordinateDescent(tolgap = 1e-8, maxiter = 10_000)
+    maxtime::Float64 = 60.0
+    maxnode::Int = typemax(Int)
+    tolgap::Float64 = 0.0
+    tolint::Float64 = 0.0
+    dualpruning::Bool = false
+    l0screening::Bool = false
+    l1screening::Bool = false
+    bigmpeeling::Bool = false
+    verbosity::Bool = false
+    showevery::Int = 1
+    trace::Bool = true
 end
 
-mutable struct Node 
+mutable struct Node
     parent::Union{Node,Nothing}
     depth::Int
     S0::BitArray
@@ -105,15 +105,15 @@ end
 
 Trace of the Branch-and-Bound solver.
 """
-Base.@kwdef mutable struct Trace 
-    ub::Vector              = Vector()
-    lb::Vector              = Vector()
+Base.@kwdef mutable struct Trace
+    ub::Vector = Vector()
+    lb::Vector = Vector()
     node_count::Vector{Int} = Vector{Int}()
-    timer::Vector           = Vector()
-    card_Sb::Vector{Int}    = Vector{Int}()
-    card_S1::Vector{Int}    = Vector{Int}()
-    card_S0::Vector{Int}    = Vector{Int}()
-    spread::Vector          = Vector()
+    timer::Vector = Vector()
+    card_Sb::Vector{Int} = Vector{Int}()
+    card_S1::Vector{Int} = Vector{Int}()
+    card_S0::Vector{Int} = Vector{Int}()
+    spread::Vector = Vector()
 end
 
 """
@@ -121,7 +121,7 @@ end
 
 Branch-and-Bound solver for a [`Problem`](@ref)
 """
-mutable struct BnB 
+mutable struct BnB
     status::MOI.TerminationStatusCode
     ub::Float64
     lb::Float64
@@ -147,7 +147,7 @@ end
 
 Results of the Branch-and-Bound solver.
 """
-struct BnbResults 
+struct BnbResults
     termination_status::MOI.TerminationStatusCode
     solve_time::Float64
     node_count::Int
@@ -227,14 +227,14 @@ end
 
 function prune!(bnb::BnB, node::Node, options::BnbParams)
     pruning_test = (node.lb > bnb.ub)
-    perfect_test = (gap(node) <= options.tolgap) 
+    perfect_test = (gap(node) <= options.tolgap)
     prune = (pruning_test | perfect_test)
     return prune
 end
 
 function branch!(prob::Problem, bnb::BnB, node::Node)
     !any(node.Sb) && return nothing
-    jSb = argmax(abs.(node.x[node.Sb])) 
+    jSb = argmax(abs.(node.x[node.Sb]))
     j = (1:prob.n)[node.Sb][jSb]
     node_j0 = Node(node, j, 0, prob)
     node_j1 = Node(node, j, 1, prob)
@@ -244,11 +244,11 @@ function branch!(prob::Problem, bnb::BnB, node::Node)
 end
 
 bound!(
-    solver::AbstractBoundingSolver, 
-    prob::Problem, 
-    bnb::BnB, 
-    node::Node,  
-    options::BnbParams,   
+    solver::AbstractBoundingSolver,
+    prob::Problem,
+    bnb::BnB,
+    node::Node,
+    options::BnbParams,
     bounding_type::BoundingType,
 ) = error("Not implemented")
 
@@ -257,8 +257,8 @@ function fixto!(node::Node, j::Int, jval::Int, prob::Problem)
     node.Sb[j] = false
     if jval == 0
         node.S0[j] = true
-        node.Mpos[j] = 0.
-        node.Mneg[j] = 0.
+        node.Mpos[j] = 0.0
+        node.Mneg[j] = 0.0
         if node.x[j] != 0.0
             axpy!(-node.x[j], prob.A[:, j], node.w)
             copy!(node.u, prob.y - node.w)
@@ -330,20 +330,20 @@ function solve_bnb(
     y::Vector,
     λ::Float64,
     Mval::Float64;
-    x0::Union{Vector,Nothing}=nothing,
-    kwargs...
-    )
+    x0::Union{Vector,Nothing} = nothing,
+    kwargs...,
+)
 
-    prob    = Problem(A, y, λ, Mval)
-    x0      = isa(x0, Nothing) ? zeros(prob.n) : x0
+    prob = Problem(A, y, λ, Mval)
+    x0 = isa(x0, Nothing) ? zeros(prob.n) : x0
     @assert length(x0) == prob.n
-    bnb     = BnB(prob, x0)
-    trace   = Trace()
+    bnb = BnB(prob, x0)
+    trace = Trace()
     options = BnbParams(; kwargs...)
 
     options.verbosity && display_head()
     while true
-        update_status!(bnb, options) 
+        update_status!(bnb, options)
         is_terminated(bnb) && break
         node = next_node!(bnb)
         bound!(options.lb_solver, prob, bnb, node, options, LOWER)
@@ -353,7 +353,9 @@ function solve_bnb(
         end
         update_bounds!(bnb, node)
         options.trace && update_trace!(prob, trace, bnb, node)
-        options.verbosity && (bnb.node_count % options.showevery == 0) && display_trace(bnb, node)
+        options.verbosity &&
+            (bnb.node_count % options.showevery == 0) &&
+            display_trace(bnb, node)
     end
     options.verbosity && display_tail()
 

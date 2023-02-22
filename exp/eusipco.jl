@@ -4,36 +4,36 @@ function parse_commandline()
     argparse = ArgParseSettings()
     @add_arg_table! argparse begin
         "k"
-        arg_type        = Int
-        required        = true
+        arg_type = Int
+        required = true
         "m"
-        arg_type        = Int
-        required        = true
+        arg_type = Int
+        required = true
         "n"
-        arg_type        = Int
-        required        = true
+        arg_type = Int
+        required = true
         "σ"
-        arg_type        = Float64
-        required        = true
+        arg_type = Float64
+        required = true
         "ρ"
-        arg_type        = Float64
-        required        = true
+        arg_type = Float64
+        required = true
         "τ"
-        arg_type        = Float64
-        required        = true
+        arg_type = Float64
+        required = true
         "γ"
-        arg_type        = Float64
-        required        = true
+        arg_type = Float64
+        required = true
         "solver"
-        arg_type        = String
-        required        = true
+        arg_type = String
+        required = true
         "maxtime"
-        arg_type        = Float64
-        required        = true
+        arg_type = Float64
+        required = true
         "--seed"
-        arg_type        = Int
-        required        = false
-        default         = 0
+        arg_type = Int
+        required = false
+        default = 0
     end
     return parse_args(argparse)
 end
@@ -45,13 +45,13 @@ function onerun(setup::Dict)
     @assert setup["k"] <= setup["n"]
     @assert setup["m"] >= 0
     @assert setup["n"] >= 0
-    @assert setup["σ"] >= 0.
-    @assert setup["ρ"] >= 0.
-    @assert setup["ρ"] <= 1.
-    @assert setup["τ"] >= 0.
-    @assert setup["γ"] >= 1.
+    @assert setup["σ"] >= 0.0
+    @assert setup["ρ"] >= 0.0
+    @assert setup["ρ"] <= 1.0
+    @assert setup["τ"] >= 0.0
+    @assert setup["γ"] >= 1.0
     @assert setup["solver"] in ["cplex", "l0bnb", "sbnb", "sbnbn", "sbnbp"]
-    @assert setup["maxtime"] >= 0.
+    @assert setup["maxtime"] >= 0.0
     @assert setup["seed"] >= 0
 
     (setup["seed"] > 0) && Random.seed!(setup["seed"])
@@ -90,10 +90,10 @@ function onerun(setup::Dict)
     # M *= setup["γ"]
 
     println("Precompiling...")
-    result = solve(setup["solver"], A, y, λ, M, maxtime=5.)
+    result = solve(setup["solver"], A, y, λ, M, maxtime = 5.0)
 
     println("Running $(setup["solver"])...")
-    result = solve(setup["solver"], A, y, λ, M, maxtime=setup["maxtime"])
+    result = solve(setup["solver"], A, y, λ, M, maxtime = setup["maxtime"])
 
     println()
     println(Problem(A, y, λ, M))

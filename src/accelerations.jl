@@ -13,19 +13,19 @@ function l0screening!(
     λ::Float64,
     Mpos::Vector,
     Mneg::Vector,
-    x::Vector, 
-    w::Vector, 
-    u::Vector, 
-    q::Vector, 
+    x::Vector,
+    w::Vector,
+    u::Vector,
+    q::Vector,
     ub::Float64,
-    dv::Float64, 
+    dv::Float64,
     S0::BitArray,
     S1::BitArray,
     Sb::BitArray,
-    Sbi::BitArray, 
-    Sbb::BitArray, 
+    Sbi::BitArray,
+    Sbb::BitArray,
     S1i::BitArray,
-    )
+)
     for i in findall(Sbi .| Sbb)
         if dv + λ * max(-q[i], 0.0) > ub
             # Move i from Sbi or Sbb to S0
@@ -38,8 +38,8 @@ function l0screening!(
                 copy!(u, y - w)
                 x[i] = 0.0
             end
-            Mpos[i] = 0.
-            Mneg[i] = 0.
+            Mpos[i] = 0.0
+            Mneg[i] = 0.0
         elseif dv + λ * max(q[i], 0.0) > ub
             # Move i from Sbi or Sbb to S1i
             Sbi[i] = false
@@ -70,24 +70,24 @@ function l1screening!(
     u::Vector,
     v::Vector,
     gap::Float64,
-    Sb0::BitArray, 
-    Sbi::BitArray, 
-    Sbb::BitArray, 
-    )
+    Sb0::BitArray,
+    Sbi::BitArray,
+    Sbb::BitArray,
+)
 
     radius = sqrt(2.0 * gap)
     for i in findall(Sbi)
         vi = v[i]
         if (abs(vi) + radius < λ / Mpos[i]) & (abs(vi) + radius < -λ / Mneg[i])
             # Move i from Sbi to Sb0
-            if x[i] != 0.
-                axpy!(-x[i], A[:, i], w)  
+            if x[i] != 0.0
+                axpy!(-x[i], A[:, i], w)
                 copy!(u, y - w)
-                x[i] = 0.
+                x[i] = 0.0
             end
             Sbi[i] = false
             Sb0[i] = true
-        elseif (abs(vi) - radius > λ / Mpos[i]) & (abs(vi) - radius > -λ / Mneg[i])        
+        elseif (abs(vi) - radius > λ / Mpos[i]) & (abs(vi) - radius > -λ / Mneg[i])
             # Move i from Sbi to Sbb
             Sbi[i] = false
             Sbb[i] = true
@@ -109,27 +109,27 @@ function bigmpeeling!(
     λ::Float64,
     Mpos::Vector,
     Mneg::Vector,
-    x::Vector, 
-    w::Vector, 
-    u::Vector, 
-    v::Vector, 
-    q::Vector, 
+    x::Vector,
+    w::Vector,
+    u::Vector,
+    v::Vector,
+    q::Vector,
     ub::Float64,
-    dv::Float64, 
+    dv::Float64,
     S0::BitArray,
     Sb::BitArray,
-    Sbi::BitArray, 
+    Sbi::BitArray,
     Sbb::BitArray,
-    )
+)
 
     flag_update = false
 
     for i in findall(Sbi .| Sbb)
         vi = v[i]
-        α = (dv + λ * max(-q[i], 0.) - ub) / vi
-        if vi < 0.
+        α = (dv + λ * max(-q[i], 0.0) - ub) / vi
+        if vi < 0.0
             # Peel Mpos
-            αpos = max(Mneg[i] + α, 0.)
+            αpos = max(Mneg[i] + α, 0.0)
             if αpos < Mpos[i]
                 if x[i] > αpos
                     axpy!(αpos - x[i], A[:, i], w)
@@ -138,9 +138,9 @@ function bigmpeeling!(
                 end
                 Mpos[i] = αpos
             end
-        elseif vi > 0.
+        elseif vi > 0.0
             # Peel Mneg
-            αneg = min(Mpos[i] + α, 0.)
+            αneg = min(Mpos[i] + α, 0.0)
             if αneg > Mneg[i]
                 if x[i] < αneg
                     axpy!(αneg - x[i], A[:, i], w)

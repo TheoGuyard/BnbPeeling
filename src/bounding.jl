@@ -5,18 +5,18 @@ Coordinate-descent solver for the bounding problems.
 """
 Base.@kwdef struct CoordinateDescent <: AbstractBoundingSolver
     tolgap::Float64 = 1e-8
-    maxiter::Int    = 10_000
+    maxiter::Int = 10_000
 end
 
 function bound!(
-    solver::CoordinateDescent, 
-    prob::Problem, 
-    bnb::BnB, 
-    node::Node,  
-    options::BnbParams,   
+    solver::CoordinateDescent,
+    prob::Problem,
+    bnb::BnB,
+    node::Node,
+    options::BnbParams,
     bounding_type::BoundingType,
-    )
-    
+)
+
     # ----- Initialization ----- #
 
     # Problem data
@@ -74,8 +74,8 @@ function bound!(
     maxiter = solver.maxiter
 
     # Objectives
-    pv  = Inf
-    dv  = -Inf
+    pv = Inf
+    dv = -Inf
     gap = Inf
 
     # ----- Main loop ----- #
@@ -94,7 +94,7 @@ function bound!(
             ci = xi + (ai' * u)
             if Sb[i]
                 if (λ / Mneg[i]) <= ci <= (λ / Mpos[i])
-                    x[i] = 0.
+                    x[i] = 0.0
                 elseif ci > (λ / Mpos[i])
                     x[i] = clamp(ci - (λ / Mpos[i]), 0, Mpos[i])
                 elseif ci < (λ / Mneg[i])
@@ -111,34 +111,33 @@ function bound!(
 
         # ----- Gap computation ----- #
 
-        Sbpos  = (Sbi .| Sbb) .& (0. .< x .<= Mpos) 
-        Sbneg  = (Sbi .| Sbb) .& (0. .> x .>= Mneg)
+        Sbpos = (Sbi .| Sbb) .& (0.0 .< x .<= Mpos)
+        Sbneg = (Sbi .| Sbb) .& (0.0 .> x .>= Mneg)
         v[idx] = A[:, idx]' * u
         q[idx] = (
-            Mpos[idx] .* max.(v[idx] ./ λ, 0.) +  
-            Mneg[idx] .* min.(v[idx] ./ λ, 0.) .- 
-            1.
+            Mpos[idx] .* max.(v[idx] ./ λ, 0.0) + Mneg[idx] .* min.(v[idx] ./ λ, 0.0) .-
+            1.0
         )
-        
+
         # Primal value
         fval = 0.5 * (u' * u)
-        gval = 0.
+        gval = 0.0
         for i in findall(idx)
             if Sbpos[i]
-                gval += max(x[i], 0.) / Mpos[i]
+                gval += max(x[i], 0.0) / Mpos[i]
             elseif Sbneg[i]
-                gval += min(x[i], 0.) / Mneg[i]
+                gval += min(x[i], 0.0) / Mneg[i]
             elseif S1[i]
-                gval += 1.
+                gval += 1.0
             end
         end
         pv = fval + λ * gval
 
         # Dual value
         cfval = 0.5 * (u' * u) - u' * y
-        cgval = 0.
+        cgval = 0.0
         for i in findall(idx)
-            cgval += Sb[i] ? max(q[i], 0.) : q[i]
+            cgval += Sb[i] ? max(q[i], 0.0) : q[i]
         end
         dv = -cfval - λ * cgval
 
@@ -158,12 +157,31 @@ function bound!(
         end
 
         # --- Accelerations --- #
-        
+
         if bounding_type == LOWER
             dualpruning && (dv >= ub) && break
-            (l0screening | bigmpeeling) && l0screening!(A, y, λ, Mpos, Mneg, x, w, u, q, ub, dv, S0, S1, Sb, Sbi, Sbb, S1i)
+            (l0screening | bigmpeeling) && l0screening!(
+                A,
+                y,
+                λ,
+                Mpos,
+                Mneg,
+                x,
+                w,
+                u,
+                q,
+                ub,
+                dv,
+                S0,
+                S1,
+                Sb,
+                Sbi,
+                Sbb,
+                S1i,
+            )
             l1screening && l1screening!(A, y, λ, Mpos, Mneg, x, w, u, v, gap, Sb0, Sbi, Sbb)
-            bigmpeeling && bigmpeeling!(A, y, λ, Mpos, Mneg, x, w, u, v, q, ub, dv, S0, Sb, Sbi, Sbb)
+            bigmpeeling &&
+                bigmpeeling!(A, y, λ, Mpos, Mneg, x, w, u, v, q, ub, dv, S0, Sb, Sbi, Sbb)
         end
     end
 
@@ -182,4 +200,3 @@ function bound!(
 
     return nothing
 end
-
