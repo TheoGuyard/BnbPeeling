@@ -70,24 +70,30 @@ function onerun(setup::Dict)
     x0, λ = calibrate(x, A, y)
 
     println("Calibrating M...")
-    M = norm(x0, Inf)
-    # while true
-    #     result = solve_sbnbp(A, y, λ, M, 
-    #         x0          = x0, 
-    #         dualpruning = true,
-    #         l0screening = true, 
-    #         bigmpeeling = true,
-    #         verbosity   = false,
-    #         trace       = false,
-    #         maxtime     = setup["maxtime"],
-    #     )
-    #     if norm(result.x) < M
-    #         M = norm(result.x, Inf)
-    #         break
-    #     end
-    #     M *= 1.1
-    # end
-    # M *= setup["γ"]
+    while true
+        result = solve_sbnbp(A, y, λ, M, 
+            x0          = x0, 
+            dualpruning = true,
+            l0screening = true, 
+            bigmpeeling = true,
+            verbosity   = false,
+            trace       = false,
+            maxtime     = setup["maxtime"],
+        )
+        if norm(result.x) < M
+            M = norm(result.x, Inf)
+            break
+        end
+        M *= 1.1
+    end
+    
+    # The calibration process can be long. You can also set M based on the approximate 
+    # solution given by L0Learn. The value of M will not be necessarily valid but is a good 
+    # estimate of the "optimal" M value. To do so, comment the above calibration lines and 
+    # uncomment the following one.
+    # M = norm(x0, Inf)
+    
+    M *= setup["γ"]
 
     println("Precompiling...")
     result = solve(setup["solver"], A, y, λ, M, maxtime = 5.0)
