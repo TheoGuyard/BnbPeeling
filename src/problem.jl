@@ -10,20 +10,21 @@ struct Problem
     Mval::Float64
     m::Int
     n::Int
+    a::Vector
     function Problem(A::Matrix, y::Vector, λ::Float64, Mval::Float64)
         m, n = size(A)
+        a = [norm(ai, 2)^2 for ai in eachcol(A)]
         @assert length(y) == m
         @assert λ > 0.0
         @assert Mval > 0.0
-        @assert all(norm(ai) ≈ 1.0 for ai in eachcol(A))
-        return new(A, y, λ, Mval, m, n)
+        return new(A, y, λ, Mval, m, n, a)
     end
 end
 
 """
     objective(prob::Problem, x::Vector, Ax::Vector)
 
-Evalutes the objective of a [`Problem`](@ref) at `x` when the value of `Ax` is 
+Evalutes the objective of a [`Problem`](@ref) at `x` when the value of `Ax` is
 already known.
 """
 function objective(prob::Problem, x::Vector, Ax::Vector)

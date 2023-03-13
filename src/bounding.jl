@@ -25,6 +25,7 @@ function bound!(
     λ = prob.λ
     m = prob.m
     n = prob.n
+    a = prob.a
 
     # Recover node informations
     if bounding_type == LOWER
@@ -91,14 +92,14 @@ function bound!(
         for i in shuffle(findall(idx))
             ai = A[:, i]
             xi = x[i]
-            ci = xi + (ai' * u)
+            ci = xi + (ai' * u) / a[i]
             if Sb[i]
-                if (λ / Mneg[i]) <= ci <= (λ / Mpos[i])
+                if (λ / a[i]) / Mneg[i] <= ci <= (λ / a[i]) / Mpos[i]
                     x[i] = 0.0
-                elseif ci > (λ / Mpos[i])
-                    x[i] = clamp(ci - (λ / Mpos[i]), 0, Mpos[i])
-                elseif ci < (λ / Mneg[i])
-                    x[i] = clamp(ci - (λ / Mneg[i]), Mneg[i], 0)
+                elseif ci > (λ / a[i]) / Mpos[i]
+                    x[i] = clamp(ci - (λ / a[i]) / Mpos[i], 0, Mpos[i])
+                elseif ci < (λ / a[i]) / Mneg[i]
+                    x[i] = clamp(ci - (λ / a[i]) / Mneg[i], Mneg[i], 0)
                 end
             else
                 x[i] = clamp(ci, Mneg[i], Mpos[i])

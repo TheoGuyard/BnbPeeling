@@ -29,9 +29,6 @@ function synthetic_data(
     for j in 1:m
         A[j, :] = rand(L)
     end
-    for ai in eachcol(A)
-        ai ./= norm(ai)
-    end
 
     w = A * x
     ϵ = randn(m)
@@ -45,6 +42,6 @@ end
     x, A, y = synthetic_data(5, 100, 300, 0.1, 0.1, 100.)
     Mval    = 1.5 * norm(x, Inf)
     λmax    = Mval * norm(A' * y, Inf)
-    result  = BnbPeeling.solve_bnb(A, y, 0.1 * λmax, Mval)
+    result  = BnbPeeling.solve_bnb(A, y, 0.1 * λmax, Mval, verbosity=true)
     @test result.termination_status == MOI.OPTIMAL
 end
